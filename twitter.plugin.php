@@ -168,6 +168,9 @@ class Twitter extends Plugin
 	{
 		$ui = new FormUI(strtolower(__CLASS__));
 
+		$general_fieldset = $ui->append('fieldset', 'general_settings', _t('General Settings', 'twitter'));
+		$username = $general_fieldset->append('text', 'username', 'twitter__username', _t('Username:', 'twitter'));
+
 		$post_fieldset = $ui->append('fieldset', 'post_settings', _t('Autopost Updates from Habari', 'twitter'));
 
 		$twitter_post = $post_fieldset->append('checkbox', 'post_status', 'twitter__post_status', _t('Autopost to Twitter:', 'twitter'));
