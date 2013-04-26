@@ -183,6 +183,8 @@ class Twitter extends Plugin
 		$twitter_limit = $tweet_fieldset->append('select', 'limit', 'twitter__limit', _t('Number of updates to show', 'twitter'));
 		$twitter_limit->options = array_combine(range(1, 20), range(1, 20));
 
+		$twitter_humandate = $tweet_fieldset->append('checkbox', 'use_humandate', 'twitter__use_humandate', _t('Use time ago format e.g. 5 hours ago', 'twitter'));
+
 		$twitter_show = $tweet_fieldset->append('checkbox', 'hide_replies', 'twitter__hide_replies', _t('Do not show @replies', 'twitter'));
 
 		$twitter_show = $tweet_fieldset->append('checkbox', 'linkify_urls', 'twitter__linkify_urls', _t('Linkify URLs'));
@@ -347,9 +349,14 @@ class Twitter extends Plugin
 					if ($xml->getName() === 'statuses') {
 						foreach ($xml->status as $status) {
 							if ((!$hide_replies) || (strpos($status->text, '@') === FALSE)) {
+								$tweettime = (string)$status->created_at;
+								if (Options::get('twitter__use_humandate')) {
+									$tweettime = $this->toTimeAgo($tweettime);
+								}
+
 								$notice = (object)array(
 									'text' => (string)$status->text,
-									'time' => (string)$status->created_at,
+									'time' => $tweettime,
 									'image_url' => (string)$status->user->profile_image_url,
 									'id' => (int)$status->id,
 									'permalink' => 'http://twitter.com/' . $username . '/status/' . (string)$status->id
@@ -556,7 +563,38 @@ class Twitter extends Plugin
 		return $update;
 	}
 
-}
+	private function toTimeAgo($tweettime)
+	{
+		$now = strtotime("now");
+		$tweettime = strtotime($tweettime);
+		$diff = $now - $tweettime;
+		$minute = 60;
+		$hour = $minute * 60;
+		$day = $hour * 24;
+		$week = $day * 7;
 
+		if (is_numeric($diff) && $diff > 0) {
+			if ($diff < 3)
+				return "right now";
+			if ($diff < $minute)
+				return floor($diff) . " seconds ago";
+			if ($diff < $minute * 2)
+				return "about 1 minute ago";
+			if ($diff < $hour)
+				return floor($diff / $minute) . " minutes ago";
+			if ($diff < $hour * 2)
+				return "about 1 hour ago";
+			if ($diff < $day)
+				return floor($diff / $hour) . " hours ago";
+			if ($diff > $day && $diff < $day * 2)
+				return "yesterday";
+			if ($diff < $day * 365)
+				return floor($diff / $day) . " days ago";
+
+			return "over a year ago";
+		}
+	}
+
+}
 
 ?>
